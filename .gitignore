@@ -1,0 +1,50 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# .NET
+backend/**/bin/
+backend/**/obj/
+backend/src/CasaticDirectorio.Api/logs/*.log
+
+# IDE and OS
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Credentials and secrets (NEVER commit to public repo)
+CREDENTIALS.md
+frontend/CREDENTIALS.md
+frontend/DEPLOYMENT.md
+frontend/DEPLOYMENT_SUMMARY.md
+frontend/NEXT_STEPS.md
+frontend/READY_TO_DEPLOY.md
+frontend/VERCEL_DEPLOYMENT.md
+
+# Vercel and Vite local cache
+frontend/.vercel/
+frontend/.vite/
+
+# Temporary local SQL/data exports
+add-pendiente.sql
+check-facturas.sql
+check-schema.sql
+cleanup.sql
+insert-7-facturas.sql
+query.sql
+reset-facturas.sql
+generate-facturas.sql
+get-socios.sql
+tmp-eventos.json
+backend/docker script/socios-current.sql
+backend/docker script/facturas-current.sql
