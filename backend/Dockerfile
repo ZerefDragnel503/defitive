@@ -27,7 +27,7 @@ RUN apt-get update \
  && useradd  --system --uid 1001 --gid casatic --shell /bin/false casatic
 
 COPY --from=build --chown=casatic:casatic /app/publish .
-COPY --chown=casatic:casatic "docker script/current-data.sql" "current-data.sql"
+COPY --chown=casatic:casatic ["docker script/current-data.sql", "current-data.sql"]
 
 # Asegurar que los directorios de imagenes existen y son escribibles por el usuario.
 RUN mkdir -p /app/wwwroot/logos /app/wwwroot/uploads && chown -R casatic:casatic /app/wwwroot
