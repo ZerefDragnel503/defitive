@@ -416,12 +416,26 @@ public static class DataSeeder
         var sql = sqlBatch.ToString();
         if (!string.IsNullOrWhiteSpace(sql))
         {
-            // Truncamos las tablas antes de cargar el dump para evitar duplicados y conflictos
             logger.LogInformation("🧹 Limpiando tablas existentes antes de cargar dump...");
-            await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE facturas, eventos, logs_actividad, formularios_contacto, usuarios, socios CASCADE;");
+            var connection = db.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+            
+            using (var cmdTruncate = connection.CreateCommand())
+            {
+                cmdTruncate.CommandText = "TRUNCATE TABLE facturas, eventos, logs_actividad, formularios_contacto, usuarios, socios CASCADE;";
+                await cmdTruncate.ExecuteNonQueryAsync();
+            }
 
             logger.LogInformation("📦 Ejecutando dump SQL...");
-            await db.Database.ExecuteSqlRawAsync(sql);
+            using (var cmdInsert = connection.CreateCommand())
+            {
+                cmdInsert.CommandText = sql;
+                cmdInsert.CommandTimeout = 300; // 5 minutos de timeout para inserciones masivas
+                await cmdInsert.ExecuteNonQueryAsync();
+            }
             logger.LogInformation("✅ Dump SQL cargado con éxito.");
         }
     }
