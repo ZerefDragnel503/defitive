@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using CasaticDirectorio.Domain.Entities;
 using CasaticDirectorio.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +14,17 @@ public static class DataSeeder
     public static async Task SeedAsync(AppDbContext db, IConfiguration config, ILogger logger)
     {
         await EnsureFacturasTableAsync(db);
+
+        // ── Cargar dump de producción si está disponible ──
+        if (!await db.Socios.AnyAsync() || await db.Socios.CountAsync() <= 1)
+        {
+            var sqlPath = Path.Combine(AppContext.BaseDirectory, "current-data.sql");
+            if (File.Exists(sqlPath))
+            {
+                await SeedFromSqlFileAsync(db, sqlPath, logger);
+                return;
+            }
+        }
 
         Socio? socioPrueba;
         if (!await db.Socios.AnyAsync())
@@ -376,5 +389,40 @@ public static class DataSeeder
         db.Socios.Add(socio);
         await db.SaveChangesAsync();
         return socio;
+    }
+
+    private static async Task SeedFromSqlFileAsync(AppDbContext db, string filePath, ILogger logger)
+    {
+        if (!File.Exists(filePath))
+        {
+            logger.LogWarning("⚠️ Archivo SQL no encontrado en: {Path}", filePath);
+            return;
+        }
+
+        logger.LogInformation("🚀 Cargando datos desde el archivo SQL: {Path}", filePath);
+        var lines = await File.ReadAllLinesAsync(filePath);
+        var sqlBatch = new System.Text.StringBuilder();
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (trimmed.StartsWith("--") || trimmed.StartsWith("\\") || string.IsNullOrWhiteSpace(trimmed))
+            {
+                continue;
+            }
+            sqlBatch.AppendLine(line);
+        }
+
+        var sql = sqlBatch.ToString();
+        if (!string.IsNullOrWhiteSpace(sql))
+        {
+            // Truncamos las tablas antes de cargar el dump para evitar duplicados y conflictos
+            logger.LogInformation("🧹 Limpiando tablas existentes antes de cargar dump...");
+            await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE facturas, eventos, logs_actividad, formularios_contacto, usuarios, socios CASCADE;");
+
+            logger.LogInformation("📦 Ejecutando dump SQL...");
+            await db.Database.ExecuteSqlRawAsync(sql);
+            logger.LogInformation("✅ Dump SQL cargado con éxito.");
+        }
     }
 }
