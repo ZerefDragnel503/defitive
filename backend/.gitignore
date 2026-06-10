@@ -6,7 +6,7 @@ logs/
 .env.*
 !.env.example
 .railway/
-docker script/current-data.sql
+# docker script/current-data.sql
 docker script/total_socios.sql
 docker script/*-current.sql
 
