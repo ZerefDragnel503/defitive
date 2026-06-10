@@ -153,6 +153,13 @@ builder.Services.AddCors(options =>
             // Sin orígenes configurados → bloqueamos todo en lugar de permitir cualquiera.
             policy.WithOrigins(Array.Empty<string>());
         }
+        else if (Array.Exists(allowedOrigins, element => element == "*"))
+        {
+            policy.SetIsOriginAllowed(origin => true)
+                  .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                  .WithHeaders("Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With")
+                  .AllowCredentials();
+        }
         else
         {
             policy.WithOrigins(allowedOrigins)
